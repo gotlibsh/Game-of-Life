@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(conway VERSION 0.1.0)
 
+include_directories(${CMAKE_SOURCE_DIR}/include)
+link_directories(${CMAKE_SOURCE_DIR}/lib)
 add_executable(conway main.c)
-include_directories("C:\\Program Files (x86)\\SDL2-2.0.12\\include")
 
-set(SDL2_LIBRARIES "C:\\Program Files (x86)\\SDL2-2.0.12\\lib\\x86\\SDL2.lib;C:\\Program Files (x86)\\SDL2-2.0.12\\lib\\x86\\SDL2main.lib")
+if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+    set(SDL2_LIBRARIES "x86/SDL2main;x86/SDL2")
+else()
+    set(SDL2_LIBRARIES "x64/SDL2main;x64/SDL2")
+endif()
+
 target_link_libraries(conway ${SDL2_LIBRARIES})
