@@ -23,6 +23,12 @@ typedef enum _border_flags
     NO_CHECK_RIGHT  = (1 << 3),
 } border_flags;
 
+typedef struct _cell
+{
+    bool alive;
+    SDL_Color color;
+} cell;
+
 typedef struct _conway_ctx_t
 {
     int width;
@@ -31,9 +37,9 @@ typedef struct _conway_ctx_t
     SDL_Color grid_color;
     SDL_Color live_color;
     SDL_Color dead_color;
-    bool* table1;
-    bool* table2;
-    bool* active_table;
+    cell* table1;
+    cell* table2;
+    cell* active_table;
     bool initialized;
 } conway_ctx_t;
 
@@ -54,8 +60,8 @@ void conway_ctx_init()
     g_ctx.grid_color.a = 0xff;
     g_ctx.live_color = g_ctx.grid_color;
 
-    g_ctx.table1 = malloc(g_ctx.width * g_ctx.height * sizeof(bool));
-    g_ctx.table2 = malloc(g_ctx.width * g_ctx.height * sizeof(bool));
+    g_ctx.table1 = malloc(g_ctx.width * g_ctx.height * sizeof(cell));
+    g_ctx.table2 = malloc(g_ctx.width * g_ctx.height * sizeof(cell));
     g_ctx.active_table = g_ctx.table1;
 
     g_ctx.initialized = true;
@@ -74,7 +80,7 @@ void conway_ctx_deinit()
     SDL_memset((uint8_t*)&g_ctx, 0, sizeof(g_ctx));
 }
 
-int init_table_of_lives(bool* table_of_lives, bool* src, int src_width, int src_height)
+int init_table_of_lives(cell* table_of_lives, bool* src, int src_width, int src_height)
 {
     int status = ERR;
 
@@ -93,13 +99,13 @@ int init_table_of_lives(bool* table_of_lives, bool* src, int src_width, int src_
             goto end;
         }
 
-        SDL_memset(table_of_lives, 0, g_ctx.width * g_ctx.height * sizeof(bool));
+        SDL_memset(table_of_lives, 0, g_ctx.width * g_ctx.height * sizeof(cell));
 
         for (int row = 0; row < src_height; ++row)
         {
             for (int col = 0; col < src_width; ++col)
             {
-                *(table_of_lives + row * g_ctx.width + col) = *(src + row * src_width + col);
+                table_of_lives[row * g_ctx.width + col].alive = src[row * src_width + col];
             }
         }
     }
@@ -110,7 +116,7 @@ int init_table_of_lives(bool* table_of_lives, bool* src, int src_width, int src_
 
         for (int i = 0; i < g_ctx.width * g_ctx.height; ++i)
         {
-            table_of_lives[i] = rand() % 2;
+            table_of_lives[i].alive = rand() % 2;
         }
     }
 
@@ -129,8 +135,8 @@ int resize_table(int delta)
     int     new_height      = 0;
     int     copy_width       = 0;
     int     copy_height      = 0;
-    bool*   new_table1      = NULL;
-    bool*   new_table2      = NULL;
+    cell*   new_table1      = NULL;
+    cell*   new_table2      = NULL;
 
 
     if (g_ctx.square_size + delta < 1 || !g_ctx.initialized)
@@ -146,14 +152,14 @@ int resize_table(int delta)
     new_height = WINDOW_HEIGHT / new_square_size;
     new_height += (WINDOW_HEIGHT % new_square_size) ? 1 : 0;
 
-    new_table1 = malloc(new_width * new_height * sizeof(bool));
+    new_table1 = malloc(new_width * new_height * sizeof(cell));
 
     if (new_table1 == NULL)
     {
         goto end;
     }
 
-    new_table2 = malloc(new_width * new_height * sizeof(bool));
+    new_table2 = malloc(new_width * new_height * sizeof(cell));
 
     if (new_table2 == NULL)
     {
@@ -169,12 +175,12 @@ int resize_table(int delta)
         copy_height = g_ctx.height;
     }
 
-    SDL_memset(new_table1, 0, new_width * new_height * sizeof(bool));
+    SDL_memset(new_table1, 0, new_width * new_height * sizeof(cell));
     for (int row = 0; row < copy_height; ++row)
     {
         for (int col = 0; col < copy_width; ++col)
         {
-            *(new_table1 + row * new_width + col) = *(g_ctx.active_table + row * g_ctx.width + col);
+            new_table1[row * new_width + col] = g_ctx.active_table[row * g_ctx.width + col];
         }
     }
         
@@ -250,42 +256,42 @@ end:
     return status;
 }
 
-int get_num_of_live_neighbors(bool* table_of_lives, int row, int col, border_flags flags)
+int get_num_of_live_neighbors(cell* table_of_lives, int row, int col, border_flags flags)
 {
     int result = 0;
 
     
     if ((flags & NO_CHECK_LEFT) != NO_CHECK_LEFT)
     {
-        result += *(table_of_lives + row * g_ctx.width + (col-1));
+        result += table_of_lives[row * g_ctx.width + (col-1)].alive;
     }
     if ((flags & NO_CHECK_RIGHT) != NO_CHECK_RIGHT)
     {
-        result += *(table_of_lives + row * g_ctx.width + (col+1));
+        result += table_of_lives[row * g_ctx.width + (col+1)].alive;
     }
     if ((flags & NO_CHECK_UP) != NO_CHECK_UP)
     {
-        result += *(table_of_lives + (row-1) * g_ctx.width + col);
+        result += table_of_lives[(row-1) * g_ctx.width + col].alive;
     }
     if ((flags & NO_CHECK_DOWN) != NO_CHECK_DOWN)
     {
-        result += *(table_of_lives + (row+1) * g_ctx.width + col);
+        result += table_of_lives[(row+1) * g_ctx.width + col].alive;
     }
     if (!(flags & (NO_CHECK_LEFT | NO_CHECK_UP)))
     {
-        result += *(table_of_lives + (row-1) * g_ctx.width + (col-1));
+        result += table_of_lives[(row-1) * g_ctx.width + (col-1)].alive;
     }
     if (!(flags & (NO_CHECK_LEFT | NO_CHECK_DOWN)))
     {
-        result += *(table_of_lives + (row+1) * g_ctx.width + (col-1));
+        result += table_of_lives[(row+1) * g_ctx.width + (col-1)].alive;
     }
     if (!(flags & (NO_CHECK_RIGHT | NO_CHECK_UP)))
     {
-        result += *(table_of_lives + (row-1) * g_ctx.width + (col+1));
+        result += table_of_lives[(row-1) * g_ctx.width + (col+1)].alive;
     }
     if (!(flags & (NO_CHECK_RIGHT | NO_CHECK_DOWN)))
     {
-        result += *(table_of_lives + (row+1) * g_ctx.width + (col+1));
+        result += table_of_lives[(row+1) * g_ctx.width + (col+1)].alive;
     }
 
     return result;
@@ -296,8 +302,8 @@ int update_table_of_lives()
     int             status                  = ERR;
     int             num_of_live_neighbors   = 0;
     border_flags    border_flags            = 0;
-    bool*           cur_table               = NULL;
-    bool*           next_table              = NULL; 
+    cell*           cur_table               = NULL;
+    cell*           next_table              = NULL; 
 
     
     if (!g_ctx.initialized)
@@ -340,22 +346,24 @@ int update_table_of_lives()
 
             num_of_live_neighbors = get_num_of_live_neighbors(cur_table, row, col, border_flags);
 
+            next_table[row * g_ctx.width + col].color = cur_table[row * g_ctx.width + col].color;
+
             // Rule 1: live cell with 2 or 3 live neighbors survives
-            if (*(cur_table + row * g_ctx.width + col) && (num_of_live_neighbors == 2 || num_of_live_neighbors == 3))
+            if (cur_table[row * g_ctx.width + col].alive && (num_of_live_neighbors == 2 || num_of_live_neighbors == 3))
             {
-                *(next_table + row * g_ctx.width + col) = true;
+                next_table[row * g_ctx.width + col].alive = true;
                 continue;
             }
 
             // Rule 2: dead cell with 3 live neighbors becomes live
-            if (*(cur_table + row * g_ctx.width + col) == false && num_of_live_neighbors == 3)
+            if (!cur_table[row * g_ctx.width + col].alive && num_of_live_neighbors == 3)
             {
-                *(next_table + row * g_ctx.width + col) = true;
+                next_table[row * g_ctx.width + col].alive = true;
                 continue;
             }
 
             // Rule 3 & 4: live and dead cells that don't apply to the previous rules become dead
-            *(next_table + row * g_ctx.width + col) = false;
+            next_table[row * g_ctx.width + col].alive = false;
         }
     }
 
@@ -366,7 +374,7 @@ end:
     return status;
 }
 
-int render_draw_table_of_lives(SDL_Renderer* renderer, bool* table_of_lives)
+int render_draw_table_of_lives(SDL_Renderer* renderer, cell* table_of_lives)
 {
     int         status  = ERR;
     SDL_Rect    dest    = {0};
@@ -388,7 +396,7 @@ int render_draw_table_of_lives(SDL_Renderer* renderer, bool* table_of_lives)
         {
             dest.x = col * g_ctx.square_size;
 
-            if (*(table_of_lives + row * g_ctx.width + col))
+            if (table_of_lives[row * g_ctx.width + col].alive)
             {
                 SDL_SetRenderDrawColor(renderer, g_ctx.live_color.r, g_ctx.live_color.g, g_ctx.live_color.b, g_ctx.live_color.a);
             }
@@ -504,11 +512,11 @@ int main(int argc, char* argv[])
 
                 if (button_state & SDL_BUTTON(SDL_BUTTON_LEFT))
                 {
-                    *(g_ctx.active_table + y * g_ctx.width + x) = true;
+                    g_ctx.active_table[y * g_ctx.width + x].alive = true;
                 }
                 if (button_state & SDL_BUTTON(SDL_BUTTON_RIGHT))
                 {
-                    *(g_ctx.active_table + y * g_ctx.width + x) = false;
+                    g_ctx.active_table[y * g_ctx.width + x].alive = false;
                 }
             }
             if (event.type == SDL_MOUSEWHEEL)
