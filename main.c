@@ -493,12 +493,22 @@ int main(int argc, char* argv[])
                 case SDL_SCANCODE_RIGHT:
                 case SDL_SCANCODE_SPACE:
                     status = update_table_of_lives();
-
                     if (status != OK)
                     {
                         goto end;
                     }
-
+                    break;
+                case SDL_SCANCODE_1:
+                    g_ctx.live_color.r = 0xff;
+                    g_ctx.live_color.b = g_ctx.live_color.g = 0;
+                    break;
+                case SDL_SCANCODE_2:
+                    g_ctx.live_color.b = 0xff;
+                    g_ctx.live_color.r = g_ctx.live_color.g = 0;
+                    break;
+                case SDL_SCANCODE_3:
+                    g_ctx.live_color.g = 0xff;
+                    g_ctx.live_color.r = g_ctx.live_color.b = 0;
                     break;
                 }
             }
