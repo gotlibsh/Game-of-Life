@@ -426,7 +426,7 @@ int main(int argc, char* argv[])
 
     conway_ctx_init();
 
-    bool gilder_gun[] =
+    bool glider_gun[] =
     {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -440,7 +440,7 @@ int main(int argc, char* argv[])
         0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     };
-    status = init_table_of_lives(g_ctx.active_table, gilder_gun, 38, 11);
+    status = init_table_of_lives(g_ctx.active_table, glider_gun, 38, 11);
 
     if (status != OK)
     {
