@@ -140,15 +140,11 @@ int resize_table(int delta)
 
     new_square_size = g_ctx.square_size + delta;
 
-    printf("new_square_size: %d\n", new_square_size);
-
     new_width = WINDOW_WIDTH / new_square_size;
     new_width += (WINDOW_WIDTH % new_square_size) ? 1 : 0;
 
     new_height = WINDOW_HEIGHT / new_square_size;
     new_height += (WINDOW_HEIGHT % new_square_size) ? 1 : 0;
-
-    printf("new_width: %d, new_height: %d\n", new_width, new_height);
 
     new_table1 = malloc(new_width * new_height * sizeof(bool));
 
@@ -517,7 +513,6 @@ int main(int argc, char* argv[])
             }
             if (event.type == SDL_MOUSEWHEEL)
             {
-                printf("mousewheel move detected, delta: %d\n", event.wheel.y);
                 resize_table(event.wheel.y);
             }
 
